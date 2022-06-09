@@ -79,5 +79,4 @@ public interface AccountDAO {
      * @throws InvalidAccountException - if the account number is invalid
      */
     public void updateBalance(String accountNo, ExpenseType expenseType, double amount) throws InvalidAccountException;
-
 }
