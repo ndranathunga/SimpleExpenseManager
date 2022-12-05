@@ -22,7 +22,7 @@ public class PersistentTransactionDAO extends SQLiteOpenHelper implements Transa
 
     // Singleton pattern
     private PersistentTransactionDAO(Context context) {
-        super(context, "expenseManager.db", null, 3);
+        super(context, "200517U.db", null, 3);
         onCreate(this.getWritableDatabase());
     }
 

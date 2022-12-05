@@ -18,7 +18,7 @@ public class PersistentAccountDAO extends SQLiteOpenHelper implements AccountDAO
     private static PersistentAccountDAO persistentAccountDAO;
 
     PersistentAccountDAO(Context context) {
-        super(context, "expenseManager.db", null, 3);
+        super(context, "200517U.db", null, 3);
         onCreate(this.getWritableDatabase());
     }
 
