@@ -131,12 +131,4 @@ public class PersistentAccountDAO extends SQLiteOpenHelper implements AccountDAO
         onCreate(sqLiteDatabase);
     }
 
-    public double getBalance(String accountNo) {
-        String getBalanceSQL = "SELECT " + BALANCE + "FROM " + TABLE_NAME + " WHERE " + ACCOUNT_NO + " = ?";
-        SQLiteDatabase db = this.getReadableDatabase();
-        @SuppressLint("Recycle") Cursor cursor = db.rawQuery(getBalanceSQL, new String[]{accountNo});
-
-        cursor.moveToFirst();
-        return cursor.getDouble(0);
-    }
 }
