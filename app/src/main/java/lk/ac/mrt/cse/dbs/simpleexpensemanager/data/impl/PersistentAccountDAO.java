@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import java.sql.PreparedStatement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,6 +16,11 @@ import lk.ac.mrt.cse.dbs.simpleexpensemanager.data.model.Account;
 import lk.ac.mrt.cse.dbs.simpleexpensemanager.data.model.ExpenseType;
 
 public class PersistentAccountDAO extends SQLiteOpenHelper implements AccountDAO {
+    private static final String TABLE_NAME = "account";
+    private static final String ACCOUNT_NO = TABLE_NAME + "No";
+    private static final String BANK_NAME = "bankName";
+    private static final String ACCOUNT_HOLDER_NAME = TABLE_NAME + "HolderName";
+    private static final String BALANCE = "balance";
     private static PersistentAccountDAO persistentAccountDAO;
 
     PersistentAccountDAO(Context context) {
@@ -32,7 +38,7 @@ public class PersistentAccountDAO extends SQLiteOpenHelper implements AccountDAO
     @Override
     public List<String> getAccountNumbersList() {
         SQLiteDatabase db = this.getReadableDatabase();
-        @SuppressLint("Recycle") Cursor cursor = db.rawQuery("SELECT accountNo FROM account", null);
+        @SuppressLint("Recycle") Cursor cursor = db.rawQuery("SELECT " + ACCOUNT_NO + " FROM " + TABLE_NAME, null);
 
         List<String> accountNumbers = new ArrayList<>();
         while (cursor.moveToNext()) {
@@ -44,7 +50,7 @@ public class PersistentAccountDAO extends SQLiteOpenHelper implements AccountDAO
     @Override
     public List<Account> getAccountsList() {
         SQLiteDatabase db = this.getReadableDatabase();
-        @SuppressLint("Recycle") Cursor cursor = db.rawQuery("SELECT * FROM account", null);
+        @SuppressLint("Recycle") Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_NAME, null);
 
         List<Account> accounts = new ArrayList<>();
         while (cursor.moveToNext()) {
@@ -62,7 +68,7 @@ public class PersistentAccountDAO extends SQLiteOpenHelper implements AccountDAO
     @Override
     public Account getAccount(String accountNo) throws InvalidAccountException {
         SQLiteDatabase db = this.getReadableDatabase();
-        @SuppressLint("Recycle") Cursor cursor = db.rawQuery("SELECT * FROM account WHERE accountNo = ?", new String[]{accountNo});
+        @SuppressLint("Recycle") Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_NAME + " WHERE " + ACCOUNT_NO + " = ?", new String[]{accountNo});
 
         if (cursor.getCount() == 0) {
             throw new InvalidAccountException("Account " + accountNo + " does not exist.");
@@ -80,7 +86,7 @@ public class PersistentAccountDAO extends SQLiteOpenHelper implements AccountDAO
     @Override
     public void addAccount(Account account) {
         SQLiteDatabase db = this.getWritableDatabase();
-        db.execSQL("INSERT INTO account VALUES (?, ?, ?, ?)", new String[]{
+        db.execSQL("INSERT INTO " + TABLE_NAME + " VALUES (?, ?, ?, ?)", new String[]{
                 account.getAccountNo(),
                 account.getBankName(),
                 account.getAccountHolderName(),
@@ -91,15 +97,18 @@ public class PersistentAccountDAO extends SQLiteOpenHelper implements AccountDAO
     @Override
     public void removeAccount(String accountNo) {
         SQLiteDatabase db = this.getWritableDatabase();
-        db.execSQL("DELETE FROM account WHERE accountNo = ?", new String[]{accountNo});
+        db.execSQL("DELETE FROM " + TABLE_NAME + " WHERE " + ACCOUNT_NO + " = ?", new String[]{accountNo});
     }
 
     @Override
     public void updateBalance(String accountNo, ExpenseType expenseType, double amount) throws InvalidAccountException {
         Account account = getAccount(accountNo);
         double newBalance = expenseType == ExpenseType.EXPENSE ? account.getBalance() - amount : account.getBalance() + amount;
+
+
+
         SQLiteDatabase db = this.getWritableDatabase();
-        db.execSQL("UPDATE account SET balance = ? WHERE accountNo = ?", new String[]{
+        db.execSQL("UPDATE " + TABLE_NAME + " SET " + BALANCE + " = ? WHERE " + ACCOUNT_NO + " = ?", new String[]{
                 String.valueOf(newBalance),
                 accountNo
         });
@@ -107,18 +116,27 @@ public class PersistentAccountDAO extends SQLiteOpenHelper implements AccountDAO
 
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
-        String createAccountTableSQL = "CREATE TABLE IF NOT EXISTS account " +
-                "(accountNo TEXT PRIMARY KEY, " +
-                "bankName TEXT, " +
-                "accountHolderName TEXT, " +
-                "balance REAL)";
+        String createAccountTableSQL = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " " +
+                "(" + ACCOUNT_NO + " TEXT PRIMARY KEY, " +
+                BANK_NAME + " TEXT, " +
+                ACCOUNT_HOLDER_NAME + " TEXT, " +
+                BALANCE + " REAL)";
 
         sqLiteDatabase.execSQL(createAccountTableSQL);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase sqLiteDatabase, int i, int i1) {
-        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS account");
+        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
         onCreate(sqLiteDatabase);
+    }
+
+    public double getBalance(String accountNo) {
+        String getBalanceSQL = "SELECT " + BALANCE + "FROM " + TABLE_NAME + " WHERE " + ACCOUNT_NO + " = ?";
+        SQLiteDatabase db = this.getReadableDatabase();
+        @SuppressLint("Recycle") Cursor cursor = db.rawQuery(getBalanceSQL, new String[]{accountNo});
+
+        cursor.moveToFirst();
+        return cursor.getDouble(0);
     }
 }

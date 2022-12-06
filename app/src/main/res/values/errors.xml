@@ -21,4 +21,5 @@
     <string name="err_bank_name_empty">Bank Name cannot be empty.</string>
     <string name="err_acct_holder_empty">Account Holder\'s Name cannot be empty.</string>
     <string name="err_init_balance_empty">Initial balance cannot be empty.</string>
+    <string name="err_low_balance">Low balance.</string>
 </resources>

@@ -99,23 +99,35 @@ public class ManageExpensesFragment extends Fragment implements View.OnClickList
 
                 if (amountStr.isEmpty()) {
                     amount.setError(getActivity().getString(R.string.err_amount_required));
-                }
+                } else {
+                    double currentBalance = currentExpenseManager.getBalance(selectedAccount);
 
-                if (currentExpenseManager != null) {
-                    try {
-                        currentExpenseManager.updateAccountBalance(selectedAccount, day, month, year,
-                                ExpenseType.valueOf(type.toUpperCase()), amountStr);
-                    } catch (InvalidAccountException e) {
-                        new AlertDialog.Builder(this.getActivity())
-                                .setTitle(this.getString(R.string.msg_account_update_unable) + selectedAccount)
-                                .setMessage(e.getMessage())
-                                .setNeutralButton(this.getString(R.string.msg_ok),
-                                        new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        dialog.cancel();
-                                    }
-                                }).setIcon(android.R.drawable.ic_dialog_alert).show();
+                    if ((currentBalance - Double.parseDouble(amountStr) < 0) && ExpenseType.valueOf(type.toUpperCase()) == ExpenseType.EXPENSE) {
+                        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                        builder.setMessage("Low Balance! Your current balance is " + currentBalance)
+                                .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+                                    public void onClick(DialogInterface dialog, int id) {}
+                                });
+                        // Create the AlertDialog object and return it
+                        builder.create().show();
+                    } else {
+                        if (currentExpenseManager != null) {
+                            try {
+                                currentExpenseManager.updateAccountBalance(selectedAccount, day, month, year,
+                                        ExpenseType.valueOf(type.toUpperCase()), amountStr);
+                            } catch (InvalidAccountException e) {
+                                new AlertDialog.Builder(this.getActivity())
+                                        .setTitle(this.getString(R.string.msg_account_update_unable) + selectedAccount)
+                                        .setMessage(e.getMessage())
+                                        .setNeutralButton(this.getString(R.string.msg_ok),
+                                                new DialogInterface.OnClickListener() {
+                                                    @Override
+                                                    public void onClick(DialogInterface dialog, int which) {
+                                                        dialog.cancel();
+                                                    }
+                                                }).setIcon(android.R.drawable.ic_dialog_alert).show();
+                            }
+                        }
                     }
                 }
                 amount.getText().clear();

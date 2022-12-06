@@ -1,6 +1,7 @@
 package lk.ac.mrt.cse.dbs.simpleexpensemanager.data.impl;
 
 import android.annotation.SuppressLint;
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -11,13 +12,17 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Objects;
 
 import lk.ac.mrt.cse.dbs.simpleexpensemanager.data.TransactionDAO;
 import lk.ac.mrt.cse.dbs.simpleexpensemanager.data.model.ExpenseType;
 import lk.ac.mrt.cse.dbs.simpleexpensemanager.data.model.Transaction;
 
 public class PersistentTransactionDAO extends SQLiteOpenHelper implements TransactionDAO {
+    private static final String TABLE_NAME = "trans";
+    private static final String ACCOUNT_NO = "accountNo";
+    private static final String DATE = "date";
+    private static final String EXPENSE_TYPE = "expenseType";
+    private static final String AMOUNT = "amount";
     private static PersistentTransactionDAO persistentTransactionDAO;
 
     // Singleton pattern
@@ -37,19 +42,27 @@ public class PersistentTransactionDAO extends SQLiteOpenHelper implements Transa
     public void logTransaction(Date date, String accountNo, ExpenseType expenseType, double amount) {
         SQLiteDatabase db = this.getWritableDatabase();
         @SuppressLint("SimpleDateFormat") String dateFormat = new SimpleDateFormat("yyyy-MM-dd").format(date);
-        db.execSQL("INSERT INTO trans (accountNo, date, expenseType, amount) VALUES (?, ?, ?, ?)",
-                new Object[]{accountNo, dateFormat, ((expenseType == ExpenseType.EXPENSE) ? 1: 0), amount});
+
+        ContentValues contentValues = new ContentValues();
+
+        contentValues.put(ACCOUNT_NO, accountNo);
+        contentValues.put(DATE, dateFormat);
+        contentValues.put(EXPENSE_TYPE, ((expenseType == ExpenseType.EXPENSE) ? 1: 0));
+        contentValues.put(AMOUNT, amount);
+
+        db.insert(TABLE_NAME, null, contentValues);
     }
 
     @SuppressLint("SimpleDateFormat")
     @Override
     public List<Transaction> getAllTransactionLogs() {
         SQLiteDatabase db = this.getReadableDatabase();
-        @SuppressLint("Recycle") Cursor cursor = db.rawQuery("SELECT * FROM trans", null);
-
+        @SuppressLint("Recycle") Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_NAME, null);
         List<Transaction> transactions = new ArrayList<>();
+
         while (cursor.moveToNext()) {
             @SuppressLint("SimpleDateFormat") Transaction transaction = null;
+
             try {
                 transaction = new Transaction(
                         new SimpleDateFormat("yyyy-MM-dd").parse(cursor.getString(1)),
@@ -69,7 +82,7 @@ public class PersistentTransactionDAO extends SQLiteOpenHelper implements Transa
     @Override
     public List<Transaction> getPaginatedTransactionLogs(int limit) {
         SQLiteDatabase db = this.getReadableDatabase();
-        @SuppressLint("Recycle") Cursor cursor = db.rawQuery("SELECT * FROM trans LIMIT " + limit + ";", null);
+        @SuppressLint("Recycle") Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_NAME + " LIMIT " + limit + ";", null);
 
         List<Transaction> transactions = new ArrayList<>();
         while (cursor.moveToNext()) {
@@ -91,18 +104,18 @@ public class PersistentTransactionDAO extends SQLiteOpenHelper implements Transa
 
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
-        String createTransactionTableSQL = "CREATE TABLE IF NOT EXISTS trans " +
-                "(accountNo TEXT, " +
-                "date TEXT, " +
-                "expenseType INT, " +
-                "amount REAL)";
+        String createTransactionTableSQL = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " " +
+                "(" + ACCOUNT_NO + " TEXT, " +
+                DATE + " TEXT, " +
+                EXPENSE_TYPE + " INT, " +
+                AMOUNT + " REAL)";
 
         sqLiteDatabase.execSQL(createTransactionTableSQL);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase sqLiteDatabase, int i, int i1) {
-        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS trans");
+        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
         onCreate(sqLiteDatabase);
     }
 }

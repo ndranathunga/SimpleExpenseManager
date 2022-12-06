@@ -128,6 +128,23 @@ public abstract class ExpenseManager implements Serializable {
         this.transactionsHolder = transactionDAO;
     }
 
+    /**
+     * Get the balance of an account, if the account exists.
+     *
+     * @param accountNo The account number of the account whose balance is to be retrieved.
+     * @return The balance of the account.
+     */
+    public double getBalance(String accountNo) {
+        Account account = null;
+        try {
+            account = accountsHolder.getAccount(accountNo);
+        } catch (InvalidAccountException e) {
+            e.printStackTrace();
+        }
+        assert account != null;
+        return account.getBalance();
+    }
+
     /***
      * This method should be implemented by the concrete implementation of this class. It will dictate how the DAO
      * objects will be initialized.
