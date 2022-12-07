@@ -23,11 +23,13 @@ public class PersistentTransactionDAO extends SQLiteOpenHelper implements Transa
     private static final String DATE = "date";
     private static final String EXPENSE_TYPE = "expenseType";
     private static final String AMOUNT = "amount";
+    private static final String ID = "id";
+    private static final int VERSION = 1;
     private static PersistentTransactionDAO persistentTransactionDAO;
 
     // Singleton pattern
     private PersistentTransactionDAO(Context context) {
-        super(context, "200517U.db", null, 3);
+        super(context, "200517U.db", null, VERSION);
         onCreate(this.getWritableDatabase());
     }
 
@@ -47,7 +49,7 @@ public class PersistentTransactionDAO extends SQLiteOpenHelper implements Transa
 
         contentValues.put(ACCOUNT_NO, accountNo);
         contentValues.put(DATE, dateFormat);
-        contentValues.put(EXPENSE_TYPE, ((expenseType == ExpenseType.EXPENSE) ? 1: 0));
+        contentValues.put(EXPENSE_TYPE, ((expenseType == ExpenseType.EXPENSE) ? 1 : 0));
         contentValues.put(AMOUNT, amount);
 
         db.insert(TABLE_NAME, null, contentValues);
@@ -82,17 +84,19 @@ public class PersistentTransactionDAO extends SQLiteOpenHelper implements Transa
     @Override
     public List<Transaction> getPaginatedTransactionLogs(int limit) {
         SQLiteDatabase db = this.getReadableDatabase();
-        @SuppressLint("Recycle") Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_NAME + " LIMIT " + limit + ";", null);
+        @SuppressLint("Recycle") Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_NAME +
+                " ORDER BY " + ID + " DESC " +
+                " LIMIT " + limit + ";", null);
 
         List<Transaction> transactions = new ArrayList<>();
         while (cursor.moveToNext()) {
             @SuppressLint("SimpleDateFormat") Transaction transaction = null;
             try {
                 transaction = new Transaction(
-                        new SimpleDateFormat("yyyy-MM-dd").parse(cursor.getString(1)),
-                        cursor.getString(0),
-                        (((cursor.getInt(2) == 1) ? ExpenseType.EXPENSE : ExpenseType.INCOME)),
-                        cursor.getDouble(3)
+                        new SimpleDateFormat("yyyy-MM-dd").parse(cursor.getString(2)),
+                        cursor.getString(1),
+                        (((cursor.getInt(3) == 1) ? ExpenseType.EXPENSE : ExpenseType.INCOME)),
+                        cursor.getDouble(4)
                 );
             } catch (ParseException e) {
                 e.printStackTrace();
@@ -105,7 +109,8 @@ public class PersistentTransactionDAO extends SQLiteOpenHelper implements Transa
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
         String createTransactionTableSQL = "CREATE TABLE IF NOT EXISTS " + TABLE_NAME + " " +
-                "(" + ACCOUNT_NO + " TEXT, " +
+                "(" + ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                ACCOUNT_NO + " TEXT, " +
                 DATE + " TEXT, " +
                 EXPENSE_TYPE + " INT, " +
                 AMOUNT + " REAL)";
